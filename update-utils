@@ -1,0 +1,4 @@
+#!/bin/sh
+cd ~/utils
+git pull
+sudo ./lnu . /usr/bin/ -f --no-directory
