@@ -1,0 +1,49 @@
+#!/usr/bin/python3
+
+import os
+import argparse
+
+parser = argparse.ArgumentParser(description='Create symbolic link for multiple items.')
+parser.add_argument('source', type=str, help='files/directories to create link for')
+target_parse = parser.add_argument('target', type=str, help='target location')
+parser.add_argument('--no-directory', action='store_true', dest='noDirectory',  help='ignore directories in source (requiring source to be a directory)')
+parser.add_argument('-s', '--subfolder', action='store_true', help='subfolder mode (requiring both source and target to be directories)')
+parser.add_argument('-f', '--force', action='store_true', help='remove existing files')
+parser.add_argument('-v', '--verbose', action='store_true', help='get more details')
+args = parser.parse_args()
+
+verbosed = args.verbose
+def system(s: str) -> int:
+    if verbosed:
+        print(f'{argparse._sys.argv[0]}: {s}')
+    return os.system(s)
+
+if __name__ == '__main__':
+    source, target = os.path.abspath(args.source), args.target
+    suffix = ' -f' if args.force else ''
+    if args.subfolder:
+        assert os.path.isdir(source) and os.path.isdir(target), 'invalid source/target type for subfolder mode'
+    if os.path.isdir(source) and os.path.isdir(target):
+        if args.subfolder:
+            target = os.path.join(target, source.split("/")[-1])
+            system(f'mkdir {target}')
+        for each in os.listdir(source):
+            if not (args.noDirectory and os.path.isdir(os.path.join(source, each))):
+                system(f'ln -s {os.path.join(source, each)} {os.path.join(target, each)}{suffix}')
+                if os.path.samefile(os.path.join(target, each), target):
+                    print(f'Warning: creating a recursive link for "{target}". Consider using "--no-directory" to avoid this.')
+    elif os.path.isdir(source) and not os.path.exists(target):
+        system(f'mkdir {target}')
+        for each in os.listdir(source):
+            if not (args.noDirectory and os.path.isdir(os.path.join(source, each))):
+                system(f'ln -s {os.path.join(source, each)} {os.path.join(target, each)}{suffix}')
+                if os.path.samefile(os.path.join(target, each), target):
+                    print(f'Warning: creating a recursive link for "{target}". Consider using "--no-directory" to avoid this.')
+    elif os.path.isfile(source) and os.path.isdir(target):
+        system(f'ln -s {source} {os.path.join(target, source.split("/")[-1])}{suffix}')
+    elif os.path.isfile(source):
+        if os.path.exists(target):
+            assert args.force, 'destination already exists; use "-f" or "--force" to overwrite'
+        system(f'ln -s {source} {target}{suffix}')
+    else:
+        raise argparse.ArgumentError(target_parse, 'unknown mode')
