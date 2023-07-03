@@ -3,7 +3,7 @@
 import os
 import argparse
 
-parser = argparse.ArgumentParser(description='Create symbolic link for multiple items.')
+parser = argparse.ArgumentParser(description='Create symbolic links for multiple items.')
 parser.add_argument('source', type=str, help='files/directories to create link for')
 target_parse = parser.add_argument('target', type=str, help='target location')
 parser.add_argument('--no-directory', action='store_true', dest='noDirectory',  help='ignore directories in source (requiring source to be a directory)')
